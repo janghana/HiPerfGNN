@@ -1,0 +1,72 @@
+wandb_project: quantized_DSC
+wandb_name: vqgan_sep
+
+lightning:
+  trainer:
+    accelerator: gpu
+    gpus: "1"
+
+    max_epochs: 100
+    accumulate_grad_batches: 1
+    enable_checkpointing: true
+
+  logger: {}
+  modelcheckpoint:
+    target: pytorch_lightning.callbacks.ModelCheckpoint
+    params:
+      dirpath: "./checkpoints"
+      filename: "{epoch:06}-{val_loss:.4f}"
+      monitor: "val/rec_loss"
+      mode: "min"
+      save_top_k: 5
+      every_n_epochs: 1
+  callbacks: {}
+
+model:
+  base_learning_rate: 1.e-9
+  target: taming.models.vqgan_sep_inference.VQModel_SEP_Inference
+  params:
+    embed_dim: 256
+    n_embed: 2
+    monitor: 'val/rec_loss'
+    ddconfig:
+      double_z: False
+      z_channels: 256
+      resolution: 60
+      in_channels: 1
+      out_ch: 1
+      ch: 128
+      ch_mult: [1,1,2,2,4]  # num_down = len(ch_mult)-1
+      num_down: [1,2,2,1,5]
+      num_res_blocks: 1
+      attn_resolutions: [0]
+      dropout: 0.0
+
+    lossconfig:
+      target: taming.modules.losses.vqperceptual.VQLoss
+      params:
+        codebook_weight: 0.01
+
+data:
+  target: main.DataModuleFromConfig
+  params:
+    batch_size: 512
+    num_workers: 2
+    train:
+      target: taming.data.dsc.DSCTrain
+      params:
+        dataroot: /mnt/hdd3/hjang/data
+      transform:
+        target: taming.data.transforms.get_transforms_DSC
+    validation:
+      target: taming.data.dsc.DSCValidation
+      params:
+        dataroot: /mnt/hdd3/hjang/data
+      transform:
+        target: taming.data.transforms.get_transforms_DSC
+    test:
+      target: taming.data.dsc.DSCTest_Task
+      params:
+        dataroot: /mnt/hdd3/hjang/data
+      transform:
+        target: taming.data.transforms.get_transforms_DSC

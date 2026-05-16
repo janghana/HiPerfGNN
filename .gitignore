@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.ipynb_checkpoints/
+
+# runtime outputs (do NOT track logs/csvs from local runs)
+**/scripts/logs/
+**/scripts/outputs/
+**/logs/
+**/outputs/
+
+# env / IDE
+.venv/
+.env
+.idea/
+.vscode/
+.DS_Store
